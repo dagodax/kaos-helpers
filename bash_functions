@@ -207,12 +207,42 @@ exit 0
 ### Kaos-only:
 
 # Create new kcp package basics need pkgname as argument:
+# mkpkg() {
+#     [ -z "$1" ] || [ -d "$1" ] && return 1
+#     mkdir -p $1 && cd $1 && pckcp -gc && sed -i "s/kaos-pkgbuild-proto/${1}/g" PKGBUILD
+#     echo -e "# $1\n" > README.md
+#     kate -n README.md PKGBUILD &
+#     return 0;
+# }
+
 mkpkg() {
-    [ -z "$1" ] || [ -d "$1" ] && return 1
-    mkdir -p $1 && cd $1 && pckcp -gc && sed -i "s/kaos-pkgbuild-proto/${1}/g" PKGBUILD
-    echo -e "# $1\n" > README.md
-    kate -n README.md PKGBUILD &
-    return 0;
+g_hub="git@github.com"
+g_raw="https://raw.githubusercontent.com"
+api_url="https://api.github.com/user/repos"
+_com=".commented"
+c=${_com:1:1}
+    if [ -n "$1" ] && [ ! -d "./$1" ];then
+        _user="kaos-addict"
+        
+# Create repo via Github api
+#g_req=$(echo "'$(printf '{"name":"PKGNAME"}' | sed "s/PKGNAME/$test/")'")
+g_req=$(echo "'{"name":"XX"}'" | sed "s/XX/$1/")
+        echo "curl -u "${_user}" ${api_url} -d ${g_req}"
+        read
+        curl -u "${_user}" ${api_url} -d ${g_req} && \
+#        git clone ${g_hub}:${_user}/$1.git || return 1 ## Clone created repo
+        [ ! -d "./$1" ] && mkdir -p "$1"
+        cd "$1"
+        
+# Get PKGBUILD proto file
+        pckcp -g${c} && sed -i "s/PKGNAME/$1/g" PKGBUILD
+        
+# Get README proto file
+        wget ${g_raw}/kaos-addict/kaos-helpers/master/README.md${_com}.kaos.proto -O README.md
+    sed -i "s/# PKGNAME/# $1/" > README.md
+        kate -n README.md PKGBUILD & return 0
+    else echo "No arg given or $1 folder exists, exiting..."
+    fi
 }
 
 # Journald display helper
